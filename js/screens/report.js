@@ -78,7 +78,7 @@
   /* ---------- Поделиться ---------- */
   function share(rec) {
     const text = Report.shareText(rec);
-    const url = 'https://t.me/' + CONFIG.BOT_USERNAME + '/' + CONFIG.APP_SHORT_NAME;
+    const url = 'https://t.me/' + CONFIG.BOT_USERNAME + (CONFIG.APP_SHORT_NAME ? '/' + CONFIG.APP_SHORT_NAME : '');
     if (TG.inTelegram) {
       TG.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text));
     } else if (navigator.share) {

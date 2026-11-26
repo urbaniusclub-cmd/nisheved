@@ -7,10 +7,11 @@ window.CONFIG = {
   // Название приложения (шапка, заставка, тексты)
   APP_NAME: 'Нишевед',
 
-  // Юзернейм бота без @ и короткое имя Mini App из @BotFather.
-  // Нужны для ссылки «Поделиться»: https://t.me/<BOT_USERNAME>/<APP_SHORT_NAME>
-  BOT_USERNAME: 'nisheved_bot',
-  APP_SHORT_NAME: 'app',
+  // Юзернейм бота без @ и короткое имя Mini App из @BotFather (команда /newapp).
+  // Ссылка «Поделиться»: https://t.me/<BOT_USERNAME>/<APP_SHORT_NAME>,
+  // если APP_SHORT_NAME пустой — просто ссылка на бота https://t.me/<BOT_USERNAME>
+  BOT_USERNAME: 'nishavedd_bot',
+  APP_SHORT_NAME: '',
 
   // Чат поддержки (открывается из Профиля)
   SUPPORT_LINK: 'https://t.me/nisheved_support',
