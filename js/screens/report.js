@@ -1,6 +1,7 @@
 /*
  * screens/report.js — «Отчёт» с тремя вкладками:
- *   Главное — 5 выводов, риски, что проверить у конкурентов
+ *   Главное — 5 выводов, риски, что проверить у конкурентов, «Скачать полный отчёт»
+ *   Рынок   — показатели ниши, тренды, возможности, SWOT, метрики (пакет «Стандарт»)
  *   Новости — лента с фильтром по тегам; тап → шторка с подробностями
  *   План    — чек-лист «неделя / месяц / квартал», галочки сохраняются
  * Содержимое собирает report.js (Report.build). MainButton — «Новое исследование».
@@ -27,8 +28,48 @@
       ).join('');
     }
 
+    html += '<button class="btn btn-secondary btn-block tap" data-tab-go="market" type="button">📊 Рынок и SWOT-анализ</button>';
     html += '<button class="btn btn-secondary btn-block tap" data-tab-go="plan" type="button">✅ Перейти к плану действий</button>';
+    html += downloadBtn();
     return html;
+  }
+
+  /* ---------- Кнопка «Скачать полный отчёт» ---------- */
+  function downloadBtn() {
+    return '<button class="btn btn-primary btn-block tap" data-act="download" type="button">📄 Скачать полный отчёт</button>';
+  }
+
+  /* ---------- Вкладка «Рынок» (пакет «Стандарт») ---------- */
+  function tabMarket(r) {
+    const TONE = { up: '▲', mid: '●', down: '▼' };
+    const list = (items, icon) => '<div class="card risks">' + items.map((x) => '<div class="risk">' + icon + ' <span>' + UI.esc(x) + '</span></div>').join('') + '</div>';
+    const swotCell = (cls, title, items) => '<div class="swot-cell ' + cls + '"><div class="swot-title">' + title + '</div>' +
+      items.map((x) => '<div class="swot-item">• ' + UI.esc(x) + '</div>').join('') + '</div>';
+    return '<div class="section-title">Показатели ниши</div>' +
+      '<div class="metrics">' + r.market.m.map((m) =>
+        '<div class="metric card"><span class="hint">' + m.label + '</span><span class="metric-v tone-' + m.tone + '">' + TONE[m.tone] + ' ' + UI.esc(m.value) + '</span></div>'
+      ).join('') + '</div>' +
+      '<div class="section-title">Тренды</div>' + list(r.market.trends, '📈') +
+      '<div class="section-title">Возможности</div>' + list(r.market.opps, '🚀') +
+      '<div class="section-title">SWOT-анализ</div>' +
+      '<div class="swot">' +
+        swotCell('sw-s', '💪 Сильные стороны', r.swot.s) + swotCell('sw-w', '🩹 Слабые стороны', r.swot.w) +
+        swotCell('sw-o', '🚀 Возможности', r.swot.o) + swotCell('sw-t', '⚠️ Угрозы', r.swot.t) +
+      '</div>' +
+      '<div class="section-title">Что отслеживать</div>' + list(r.kpis, '🎯') +
+      downloadBtn();
+  }
+
+  /* ---------- Скачать: полная версия открывается в браузере (print.html), там — «Сохранить в PDF» ----------
+   * Параметры отчёта (не содержимое) кодируются в адрес после #, отчёт собирается заново на странице печати.
+   */
+  function download(rec) {
+    const data = { v: 1 };
+    ['nicheId', 'sub', 'customNiche', 'role', 'clients', 'size', 'geo', 'city', 'competitors', 'product', 'company', 'inn', 'contactName', 'goalId', 'createdAt', 'done']
+      .forEach((k) => { if (rec[k] != null && rec[k] !== '') data[k] = rec[k]; });
+    const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const base = location.href.split('#')[0].split('?')[0].replace(/index\.html$/, '');
+    TG.openLink(base + 'print.html#' + b64);
   }
 
   /* ---------- Вкладка «Новости» ---------- */
@@ -94,7 +135,7 @@
       if (!rec) return '<div class="page"><div class="empty card"><div class="empty-art">🤷</div><div class="empty-title">Отчёт не найден</div></div></div>';
       const r = Report.build(rec);
       const tab = params.tab || 'main';
-      const tabs = [['main', 'Главное'], ['news', 'Новости'], ['plan', 'План']];
+      const tabs = [['main', 'Главное'], ['market', 'Рынок'], ['news', 'Новости'], ['plan', 'План']];
       return '<div class="page">' +
         '<div class="rep-head card">' +
           '<span class="rep-emoji">' + r.emoji + '</span>' +
@@ -126,7 +167,7 @@
 
       function renderTab(animate) {
         const tab = params.tab || 'main';
-        content.innerHTML = tab === 'news' ? tabNews(r, filter) : tab === 'plan' ? tabPlan(r, rec) : tabMain(r);
+        content.innerHTML = tab === 'news' ? tabNews(r, filter) : tab === 'plan' ? tabPlan(r, rec) : tab === 'market' ? tabMarket(r) : tabMain(r);
         UI.hscroll(content);   // стрелки у фильтра тегов
         if (animate) { content.classList.remove('fade-in'); void content.offsetWidth; content.classList.add('fade-in'); }
       }
@@ -145,6 +186,7 @@
         const go = e.target.closest('[data-tab-go]');
         if (go) { TG.haptic.tap(); setTab(go.dataset.tabGo); return; }
         if (e.target.closest('[data-act=share]')) { TG.haptic.tap(); share(rec); return; }
+        if (e.target.closest('[data-act=download]')) { TG.haptic.tap(); download(rec); return; }
 
         const f = e.target.closest('[data-filter]');
         if (f) { TG.haptic.select(); filter = f.dataset.filter; renderTab(false); return; }

@@ -27,11 +27,11 @@ function copyText(text) {
 
 function openReferral() {
   const link = referralLink();
-  const text = 'Попробуй ' + CONFIG.APP_NAME + ' — исследование ниши за 5 минут: свежие новости, инсайты и план действий. Первое исследование бесплатно 🎁';
+  const text = 'Попробуй ' + CONFIG.APP_NAME + ' — исследование ниши за 5 минут: свежие новости, инсайты и план действий. 1 день бесплатно за подписку на бота 🎁';
   UI.sheet(
     '<div class="ref-art">🤝</div>' +
     '<h2 class="sheet-title center">Порекомендуйте друзьям</h2>' +
-    '<div class="ref-offer">🎁 1 рекомендация = 1 исследование бесплатно</div>' +
+    '<div class="ref-offer">🎁 1 рекомендация = 1 день «Стандарта» бесплатно</div>' +
     '<p class="sheet-text center">Поделитесь личной ссылкой с коллегами и знакомыми предпринимателями</p>' +
     '<div class="ref-link">' + UI.esc(link) + '</div>' +
     '<button class="btn btn-primary btn-block tap" data-ref="send" type="button">' + UI.icon('share', 20) + ' Отправить друзьям</button>' +
@@ -95,15 +95,16 @@ Router.register('profile', {
         (u.username ? '<div class="hint">@' + UI.esc(u.username) + '</div>' : '') +
       '</div>' +
       '<div class="card balance">' +
-        '<div><div class="hint">Баланс</div><div class="balance-n">⭐ ' + Screens.balanceText(Store.state.balance) + '</div></div>' +
-        '<button class="btn btn-primary btn-small tap" data-act="buy" type="button">Купить</button>' +
+        '<div><div class="hint">Пакет</div><div class="balance-n">' +
+          (Store.hasAccess() ? '✅ Стандарт ' + Screens.accessUntilText() : 'Не активен') + '</div></div>' +
+        '<button class="btn btn-primary btn-small tap" data-act="buy" type="button">' + (Store.hasAccess() ? 'Продлить' : 'Выбрать') + '</button>' +
       '</div>' +
       '<div class="section-title">Мой бизнес</div>' + business +
       '<div class="list card">' +
         link('support', 'support', 'Поддержка') +
         '<button class="row tap" data-act="refer" type="button"><span class="row-ic">' + UI.icon('share') + '</span>' +
           '<span class="row-main"><span class="row-title">Порекомендовать друзьям</span>' +
-          '<span class="row-sub">1 рекомендация = 1 исследование бесплатно</span></span>' +
+          '<span class="row-sub">1 рекомендация = 1 день «Стандарта» бесплатно</span></span>' +
           '<span class="row-icon">' + UI.icon('chevron', 20) + '</span></button>' +
         link('privacy', 'shield', 'Конфиденциальность') +
         link('reset', 'trash', 'Очистить данные', 'danger') +

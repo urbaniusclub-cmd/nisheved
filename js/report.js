@@ -54,8 +54,11 @@ window.Report = (function () {
     const goal = DATA.goal(rec.goalId) || DATA.GOALS[5];
     const plans = DATA.GOAL_PLANS[goal.id];
 
-    // Новости: нишевые + общие, свежие сверху. Даты считаем от даты создания отчёта.
-    const news = content.news.concat(DATA.COMMON_NEWS)
+    // Новости: нишевые + общие + новость по типу клиентов (B2B/B2C) — около 10, свежие сверху.
+    // Даты считаем от даты создания отчёта.
+    const clientsNews = content.news.some((n) => n.id === 'g4') ? []   // универсальный шаблон уже содержит её
+      : [fill(rec.clients === 'B2C' ? DATA.GENERIC_CONTENT.news_b2c : DATA.GENERIC_CONTENT.news_b2b, nicheTitle(rec))];
+    const news = content.news.concat(DATA.COMMON_NEWS, clientsNews)
       .map((n) => Object.assign({}, n, {
         date: new Date(rec.createdAt - n.daysAgo * 86400000),
         url: DATA.SOURCES[n.source] || ''
@@ -78,8 +81,27 @@ window.Report = (function () {
       quarter: tag(plans.quarter, 'q')
     };
 
+    // Обзор рынка (вкладка «Рынок»): показатели, тренды, возможности
+    const market = DATA.NICHE_MARKET[effectiveNiche(rec) || 'custom'] || DATA.NICHE_MARKET.custom;
+
+    // SWOT: сильные/слабые стороны — из анкеты, возможности — из рынка, угрозы — риски
+    const geoCity = rec.geo === 'Мой город' && rec.city;
+    const swot = {
+      s: ['Гибкость и скорость решений',
+          rec.product ? 'Понятный продукт: ' + rec.product : 'Знание своих клиентов',
+          geoCity ? 'Местное присутствие: ' + rec.city : 'Возможность работать на широкую географию'],
+      w: ['Ограниченный бюджет на маркетинг',
+          'Зависимость от ключевых сотрудников',
+          rec.clients === 'B2C' ? 'Дорогое привлечение новых клиентов' : 'Длинный цикл сделки'],
+      o: market.opps,
+      t: risks
+    };
+
     return {
       nicheTitle: nicheTitle(rec),
+      market,
+      swot,
+      kpis: DATA.GOAL_KPIS[goal.id] || [],
       emoji: nicheEmoji(rec),
       basedOn: basedOn(rec),
       goal,

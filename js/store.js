@@ -3,7 +3,7 @@
  *
  * Что хранится (ключи в Telegram CloudStorage / localStorage):
  *   profile   — данные о бизнесе (ниша, роль, гео…), JSON
- *   balance   — сколько исследований доступно, число
+ *   access    — до какого момента действует пакет «Стандарт» (мс с 1970), число
  *   reports   — список id отчётов, JSON-массив (новые первыми)
  *   r_<id>    — один отчёт: параметры + отмеченные шаги плана, JSON
  *   bonus     — '1', если бонус за подписку на бота уже получен
@@ -20,7 +20,7 @@ window.Store = (function () {
 
   const state = {
     profile: {},
-    balance: 0,
+    accessUntil: 0,        // пакет «Стандарт» действует до этого момента (мс)
     reportIds: [],
     reports: {},
     draft: emptyDraft(),
@@ -45,19 +45,13 @@ window.Store = (function () {
 
   /* ---------- Загрузка при старте ---------- */
   async function load() {
-    const base = await S.getMany(['profile', 'balance', 'reports', 'bonus', 'referrer', 'onboarded']);
+    const base = await S.getMany(['profile', 'access', 'reports', 'bonus', 'referrer', 'onboarded']);
     state.profile = parse(base.profile, {});
     state.onboarded = base.onboarded === '1';
     state.bonusClaimed = base.bonus === '1';
     state.referrer = base.referrer || '';
     state.reportIds = parse(base.reports, []);
-    if (base.balance === '' || base.balance == null) {
-      // Первый запуск — дарим бесплатные исследования
-      state.balance = CONFIG.FREE_RESEARCHES;
-      await S.set('balance', String(state.balance));
-    } else {
-      state.balance = parseInt(base.balance, 10) || 0;
-    }
+    state.accessUntil = parseInt(base.access, 10) || 0;
     const recs = await S.getMany(state.reportIds.map((id) => 'r_' + id));
     state.reportIds = state.reportIds.filter((id) => {
       const r = parse(recs['r_' + id], null);
@@ -87,10 +81,13 @@ window.Store = (function () {
     await S.set('profile', JSON.stringify(state.profile));
   }
 
-  /* ---------- Баланс ---------- */
-  async function addBalance(n) {
-    state.balance = Math.max(0, state.balance + n);
-    await S.set('balance', String(state.balance));
+  /* ---------- Доступ «Стандарт» ---------- */
+  function hasAccess() { return Date.now() < state.accessUntil; }
+
+  // Продлить доступ на days дней (от текущего окончания, если пакет ещё действует)
+  async function addDays(days) {
+    state.accessUntil = Math.max(Date.now(), state.accessUntil) + days * 86400000;
+    await S.set('access', String(state.accessUntil));
   }
 
   // Приветствие показано — больше не показываем
@@ -104,7 +101,8 @@ window.Store = (function () {
     if (state.bonusClaimed) return false;
     state.bonusClaimed = true;
     await S.set('bonus', '1');
-    await addBalance(CONFIG.BONUS_RESEARCHES);
+    const bonusPlan = CONFIG.PLANS.find((p) => p.bonus);
+    await addDays(bonusPlan ? bonusPlan.days : 1);
     return true;
   }
 
@@ -129,7 +127,6 @@ window.Store = (function () {
     await S.set('r_' + id, JSON.stringify(rec));
     await S.set('reports', JSON.stringify(state.reportIds));
     await saveProfile(draft);   // запоминаем бизнес для следующих исследований
-    await addBalance(-1);
     return rec;
   }
 
@@ -147,11 +144,10 @@ window.Store = (function () {
 
   /* ---------- Сброс (кнопка в Профиле) ---------- */
   async function resetAll() {
-    await S.remove(['profile', 'balance', 'reports', 'bonus', 'onboarded'].concat(state.reportIds.map((id) => 'r_' + id)));
-    state.profile = {}; state.reportIds = []; state.reports = {}; state.draft = emptyDraft(); state.bonusClaimed = false; state.onboarded = false;
-    state.balance = CONFIG.FREE_RESEARCHES;
-    await S.set('balance', String(state.balance));
+    await S.remove(['profile', 'access', 'balance', 'reports', 'bonus', 'onboarded'].concat(state.reportIds.map((id) => 'r_' + id)));
+    state.profile = {}; state.reportIds = []; state.reports = {}; state.draft = emptyDraft();
+    state.bonusClaimed = false; state.onboarded = false; state.accessUntil = 0;
   }
 
-  return { state, load, startDraft, saveProfile, addBalance, setOnboarded, claimBonus, setReferrer, createReport, getReport, listReports, isReady, toggleStep, resetAll };
+  return { state, load, startDraft, saveProfile, hasAccess, addDays, setOnboarded, claimBonus, setReferrer, createReport, getReport, listReports, isReady, toggleStep, resetAll };
 })();

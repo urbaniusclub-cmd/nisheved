@@ -108,9 +108,14 @@ window.Screens = (function () {
 
   function fmt(n) { return Number(n).toLocaleString('ru-RU'); }
 
-  function balanceText(n) {
-    return n + ' ' + UI.plural(n, 'исследование', 'исследования', 'исследований');
+  // «до 5 декабря» / «до 14:30» (если сегодня) — когда заканчивается пакет «Стандарт»
+  function accessUntilText() {
+    const until = new Date(Store.state.accessUntil);
+    const sameDay = until.toDateString() === new Date().toDateString();
+    return 'до ' + (sameDay ? until.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : UI.dateShort(until));
   }
 
-  return { ctx, steps, tagChip, openNews, innValid, formButton, startProfileEdit, aboutLine, fmt, balanceText, firstNameFromFio, displayName };
+  function daysText(n) { return n + ' ' + UI.plural(n, 'день', 'дня', 'дней'); }
+
+  return { ctx, steps, tagChip, openNews, innValid, formButton, startProfileEdit, aboutLine, fmt, accessUntilText, daysText, firstNameFromFio, displayName };
 })();

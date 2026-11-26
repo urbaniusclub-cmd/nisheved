@@ -28,7 +28,7 @@
             '<span class="row-main"><span class="row-title wrap">' + p.title + '</span><span class="row-sub wrap">' + p.text + '</span></span></div>'
           ).join('') +
         '</div>' +
-        '<div class="welcome-gift">🎁 Первое исследование — бесплатно</div>' +
+        '<div class="welcome-gift">🎁 1 день «Стандарта» — бесплатно</div>' +
         '<div class="hint center">Вопросы и идеи — <button class="link-btn tap" data-act="author" type="button">@' + UI.esc(CONFIG.SUPPORT_USERNAME) + '</button></div>' +
       '</div>';
     },

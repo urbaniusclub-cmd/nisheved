@@ -8,8 +8,7 @@ Router.register('confirm', {
     const c = Store.state.draft;
     const n = DATA.niche(c.nicheId);
     const g = DATA.goal(c.goalId);
-    const bal = Store.state.balance;
-    const isFree = bal > 0 && !Store.listReports().length;
+    const access = Store.hasAccess();
 
     const row = (emoji, label, value, edit) =>
       '<button class="row tap" data-edit="' + edit + '" type="button">' +
@@ -18,11 +17,10 @@ Router.register('confirm', {
         '<span class="row-icon">' + UI.icon('edit', 20) + '</span>' +
       '</button>';
 
-    const price = bal <= 0
-      ? '<div class="price price-warn">Исследования закончились — пополните баланс</div>'
-      : isFree
-        ? '<div class="price"><span>Стоимость</span><b>🎁 Бесплатно</b></div>'
-        : '<div class="price"><span>Спишется</span><b>1 из ' + bal + '</b></div>';
+    // Доступ «Стандарт»: активен — исследование без списаний; нет — нужно выбрать пакет
+    const price = access
+      ? '<div class="price"><span>Пакет «Стандарт»</span><b>✅ ' + Screens.accessUntilText() + '</b></div>'
+      : '<div class="price price-warn">' + (Store.state.bonusClaimed ? 'Нужен пакет «Стандарт»' : '🎁 Подпишитесь на бота — 1 день «Стандарта» бесплатно') + '</div>';
 
     return '<div class="page">' +
       '<h1 class="title">Всё верно?</h1>' +
@@ -34,18 +32,18 @@ Router.register('confirm', {
       '</div>' +
       '<div class="section-title">Что вы получите</div>' +
       '<div class="get-grid">' +
-        '<div class="get card"><span>📰</span>Свежие новости</div>' +
-        '<div class="get card"><span>📊</span>5 главных выводов</div>' +
-        '<div class="get card"><span>✅</span>План действий</div>' +
+        '<div class="get card"><span>📰</span>10 свежих новостей</div>' +
+        '<div class="get card"><span>📊</span>Рынок и SWOT</div>' +
+        '<div class="get card"><span>✅</span>План и метрики</div>' +
+        '<div class="get card"><span>📄</span>Отчёт для скачивания</div>' +
       '</div>' +
       price +
     '</div>';
   },
 
   mount(el) {
-    const bal = Store.state.balance;
     let creating = false;
-    TG.mainButton.show(bal > 0
+    TG.mainButton.show(Store.hasAccess()
       ? {
           text: 'Получить исследование',
           onClick: async () => {
@@ -56,7 +54,7 @@ Router.register('confirm', {
             Router.go('generating', { id: rec.id }, { base: [{ name: 'home' }] });
           }
         }
-      : { text: 'Пополнить баланс', onClick: () => Router.go('payment', { returnTo: 'confirm' }) });
+      : { text: Store.state.bonusClaimed ? 'Выбрать пакет' : 'Получить 1 день бесплатно', onClick: () => Router.go('payment', { returnTo: 'confirm' }) });
 
     el.addEventListener('click', (e) => {
       const r = e.target.closest('[data-edit]');

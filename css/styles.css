@@ -306,7 +306,7 @@ h1, h2, p { margin: 0; }
 .goal.selected .goal-radio { border: 7px solid var(--accent); }
 
 /* Подтверждение */
-.get-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.get-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .get { padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 14px; font-weight: 500; }
 .get span { font-size: 28px; }
 .price { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
@@ -347,6 +347,19 @@ h1, h2, p { margin: 0; }
 .seg { min-height: 44px; border-radius: 9px; font-size: 15px; font-weight: 600; color: var(--hint); text-align: center; transition: background-color 180ms, color 180ms; }
 .seg.on { background: var(--accent); color: var(--on-accent); }
 .tab-content { display: flex; flex-direction: column; gap: 10px; }
+.segmented { grid-template-columns: repeat(4, 1fr); }
+.seg { font-size: 14px; }
+
+/* Вкладка «Рынок»: показатели, SWOT */
+.metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.metric { padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.metric-v { font-weight: 700; font-size: 16px; }
+.tone-up { color: var(--ok); } .tone-mid { color: var(--warn); } .tone-down { color: var(--danger); }
+.swot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.swot-cell { padding: 12px; border-radius: var(--radius-s); display: flex; flex-direction: column; gap: 4px; font-size: 14px; line-height: 1.35; }
+.swot-title { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+.sw-s { background: rgba(49, 181, 69, .12); } .sw-w { background: rgba(245, 165, 36, .14); }
+.sw-o { background: var(--accent-soft); } .sw-t { background: rgba(229, 72, 77, .12); }
 
 .insight { display: flex; gap: 12px; padding: 14px; align-items: flex-start; }
 .insight-ic { font-size: 24px; line-height: 1.2; }
@@ -407,6 +420,27 @@ h1, h2, p { margin: 0; }
 .promo-btn { margin-top: 6px; background: #fff; color: var(--accent); }
 .promo-done { padding: 12px 14px; border-radius: var(--radius-s); background: rgba(49, 181, 69, .12); color: var(--ok); font-weight: 600; text-align: center; }
 .row-title.wrap, .row-sub.wrap { white-space: normal; }
+
+/* Пакеты: «Стандарт» (1 день / неделя / месяц) и «Глубокий аудит» */
+.tier { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.tier-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.tier-name { font-size: 20px; font-weight: 700; }
+.tier-badge { padding: 3px 10px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 700; }
+.tier-badge-dark { background: rgba(139, 92, 246, .14); color: var(--t-law); }
+.plans { display: flex; flex-direction: column; gap: 10px; }
+.plan { position: relative; width: 100%; padding: 14px; display: flex; flex-direction: column; gap: 12px; border: 2px solid transparent; transition: border-color 150ms, background-color 150ms, transform 120ms; }
+.plan.selected { border-color: var(--accent); background: var(--accent-soft); }
+.plan-top { display: flex; align-items: center; gap: 12px; width: 100%; }
+.plan-days { width: 52px; height: 52px; border-radius: 14px; background: var(--accent); color: #fff; font-size: 20px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; flex-shrink: 0; }
+.plan-days small { font-size: 11px; font-weight: 600; margin-top: 2px; }
+.plan-bonus .plan-days { background: var(--ok); font-size: 26px; }
+.plan-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.plan-title { font-weight: 700; font-size: 16px; }
+.plan-price { font-weight: 700; white-space: nowrap; }
+.plan-bonus { border: 2px dashed rgba(49, 181, 69, .5); }
+.plan-used { opacity: .7; }
+.audit { padding: 16px; display: flex; flex-direction: column; gap: 8px; border: 2px solid rgba(139, 92, 246, .25); }
+.audit-text { font-size: 15px; line-height: 1.45; }
 
 /* Реферальная шторка */
 .ref-art { font-size: 48px; text-align: center; }

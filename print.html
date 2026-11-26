@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  print.html — полный отчёт для скачивания (пакет «Стандарт»).
+  Открывается из отчёта кнопкой «Скачать полный отчёт» во внешнем браузере.
+  Параметры отчёта приходят в адресе после # (см. download() в js/screens/report.js),
+  содержимое собирается заново через Report.build. Кнопка «Сохранить в PDF» — печать браузера.
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Отчёт — Нишевед</title>
+  <link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+  <div class="toolbar no-print">
+    <button type="button" id="pdf">📄 Сохранить в PDF</button>
+  </div>
+  <main id="doc"><p class="muted">Загружаем отчёт…</p></main>
+
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/report.js"></script>
+  <script src="js/print.js"></script>
+</body>
+</html>

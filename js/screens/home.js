@@ -34,12 +34,13 @@
       const pending = reports.filter((r) => !Store.isReady(r)).length;
 
       // Две кнопки в герой-карточке: баланс (→ Оплата) и «Мои исследования» (→ История)
+      // Кнопка доступа: подарок → активный «Стандарт» → купить
       let balanceText;
-      if (!s.bonusClaimed) balanceText = '🎁 Первое бесплатно';          // подарок за подписку на бота
-      else if (s.balance > 0 && !reports.length) balanceText = '🎁 ' + s.balance + ' бесплатно';
-      else if (s.balance > 0) balanceText = '⭐ ' + s.balance + ' · Пополнить';
-      else balanceText = '⭐ Пополнить баланс';
-      const highlight = !s.bonusClaimed || s.balance <= 0;
+      const access = Store.hasAccess();
+      if (access) balanceText = '✅ Стандарт ' + Screens.accessUntilText();
+      else if (!s.bonusClaimed) balanceText = '🎁 1 день бесплатно';   // подарок за подписку на бота
+      else balanceText = '⭐ Выбрать пакет';
+      const highlight = !access;
       const heroActions = '<div class="hero-actions">' +
         '<button class="hero-btn tap' + (highlight ? ' hero-btn-warn' : '') + '" data-act="buy" type="button">' + balanceText + '</button>' +
         '<button class="hero-btn tap" data-act="history" type="button">🗂 Мои исследования' +
