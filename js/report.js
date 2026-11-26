@@ -16,13 +16,41 @@ window.Report = (function () {
     return rec.sub ? base + ' · ' + rec.sub : base;
   }
 
+  // Сфера, по которой берём данные: своя ниша → распознанная по ключевым словам (или '')
+  function effectiveNiche(rec) {
+    if (rec.nicheId !== 'custom') return rec.nicheId;
+    return DATA.matchNiche(rec.customNiche);
+  }
+
   function nicheEmoji(rec) {
-    const n = DATA.niche(rec.nicheId);
-    return rec.nicheId === 'custom' ? '🧩' : (n ? n.emoji : '🧩');
+    const n = DATA.niche(effectiveNiche(rec));
+    return n && n.emoji ? n.emoji : '🧩';
+  }
+
+  // Подставить название ниши вместо {n} во всех строках объекта
+  function fill(obj, name) {
+    return JSON.parse(JSON.stringify(obj).replace(/\{n\}/g, name.replace(/["\\]/g, '')));
+  }
+
+  // Контент отчёта для «своей ниши»: данные распознанной сферы или универсальный шаблон
+  function customContent(rec) {
+    const matched = effectiveNiche(rec);
+    if (matched) return DATA.NICHE_CONTENT[matched];
+    const name = (rec.customNiche || 'ваша ниша').trim();
+    const G = DATA.GENERIC_CONTENT;
+    const extra = rec.clients === 'B2C' ? G.news_b2c : G.news_b2b;   // «Оба» и B2B → тендеры
+    return fill({ news: G.news.concat([extra]), insights: G.insights, risks: G.risks, step: G.step }, name);
+  }
+
+  // Подпись «на чём основан отчёт» для своей ниши
+  function basedOn(rec) {
+    if (rec.nicheId !== 'custom') return '';
+    const n = DATA.niche(effectiveNiche(rec));
+    return n && n.id !== 'custom' ? 'Данные сферы: ' + n.emoji + ' ' + n.title : 'Универсальный анализ: общие тренды бизнеса';
   }
 
   function build(rec) {
-    const content = DATA.NICHE_CONTENT[rec.nicheId] || DATA.NICHE_CONTENT.custom;
+    const content = rec.nicheId === 'custom' ? customContent(rec) : (DATA.NICHE_CONTENT[rec.nicheId] || DATA.NICHE_CONTENT.custom);
     const goal = DATA.goal(rec.goalId) || DATA.GOALS[5];
     const plans = DATA.GOAL_PLANS[goal.id];
 
@@ -53,6 +81,7 @@ window.Report = (function () {
     return {
       nicheTitle: nicheTitle(rec),
       emoji: nicheEmoji(rec),
+      basedOn: basedOn(rec),
       goal,
       insights,
       risks,
@@ -86,5 +115,5 @@ window.Report = (function () {
       .sort((a, b) => a.daysAgo - b.daysAgo);
   }
 
-  return { build, nicheTitle, nicheEmoji, shareText, latestNews };
+  return { build, nicheTitle, nicheEmoji, effectiveNiche, basedOn, shareText, latestNews };
 })();

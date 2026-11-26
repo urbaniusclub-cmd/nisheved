@@ -99,7 +99,9 @@
         '<div class="rep-head card">' +
           '<span class="rep-emoji">' + r.emoji + '</span>' +
           '<span class="rep-info"><span class="rep-title">' + UI.esc(r.nicheTitle) + '</span>' +
-          '<span class="hint">' + r.goal.emoji + ' ' + r.goal.title + ' · ' + UI.dateShort(rec.createdAt) + '</span></span>' +
+          '<span class="hint">' + r.goal.emoji + ' ' + r.goal.title + ' · ' + UI.dateShort(rec.createdAt) + '</span>' +
+          (r.basedOn ? '<span class="hint">' + UI.esc(r.basedOn) + '</span>' : '') +   // для «своей ниши»
+          '</span>' +
           '<button class="icon-btn tap" data-act="share" type="button" aria-label="Поделиться">' + UI.icon('share') + '</button>' +
         '</div>' +
         '<div class="demo-note">Демо-отчёт: новости — примеры для показа интерфейса</div>' +

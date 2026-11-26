@@ -49,7 +49,7 @@
       '</div>';
 
       // Фильтр ленты: Все, Весь бизнес, затем ниши (ниша пользователя — первой)
-      const my = s.profile.nicheId;
+      const my = s.profile.nicheId ? Report.effectiveNiche(s.profile) : '';   // своя ниша → распознанная сфера
       const niches = DATA.NICHES.slice().sort((a, b) => (b.id === my) - (a.id === my));
       const f = params.filter || '';
       const chips = '<div class="chips chips-scroll">' +

@@ -194,6 +194,7 @@ h1, h2, p { margin: 0; }
 .add-btn { width: 48px; padding: 0; flex-shrink: 0; }
 
 .block { display: flex; flex-direction: column; gap: 8px; }
+.custom-hint:not(:empty) { font-size: 14px; padding: 10px 12px; border-radius: var(--radius-s); background: var(--accent-soft); line-height: 1.4; }
 .label { font-size: 15px; font-weight: 600; padding: 0 4px; }
 
 /* Чипы: минимум 44px */

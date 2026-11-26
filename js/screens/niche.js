@@ -21,7 +21,8 @@ Router.register('niche', {
       '<div class="nothing hint" hidden>Не нашли? Выберите «Своя ниша»</div>' +
       '<div class="block sub-block" hidden><div class="label">Уточните <span class="hint">· необязательно</span></div><div class="chips sub-chips"></div></div>' +
       '<div class="block custom-block" hidden><div class="label">Опишите нишу</div>' +
-        '<input class="input custom-input" maxlength="60" placeholder="Например: аренда спецтехники" value="' + UI.esc(c.customNiche || '') + '"></div>' +
+        '<input class="input custom-input" maxlength="60" placeholder="Например: аренда спецтехники" value="' + UI.esc(c.customNiche || '') + '">' +
+        '<div class="custom-hint"></div></div>' +
     '</div>';
   },
 
@@ -78,7 +79,18 @@ Router.register('niche', {
       }
     });
 
-    customInput.addEventListener('input', () => { c.customNiche = customInput.value; updateBtn(); });
+    // Подсказка под «Своей нишей»: какую сферу распознали (или универсальный анализ)
+    const hint = el.querySelector('.custom-hint');
+    function updateHint() {
+      const text = (c.customNiche || '').trim();
+      if (text.length < 2) { hint.innerHTML = ''; return; }
+      const n = DATA.niche(DATA.matchNiche(text));
+      hint.innerHTML = n
+        ? '✨ Подберём данные сферы <b>' + n.emoji + ' ' + n.title + '</b> и адаптируем под вашу нишу'
+        : '✨ Соберём исследование по общим трендам бизнеса для вашей ниши';
+    }
+    updateHint();
+    customInput.addEventListener('input', () => { c.customNiche = customInput.value; updateHint(); updateBtn(); });
 
     // Поиск: фильтруем плитки по названию и поднишам
     search.addEventListener('input', () => {
@@ -86,8 +98,10 @@ Router.register('niche', {
       let shown = 0;
       el.querySelectorAll('.tile').forEach((t) => {
         const n = DATA.niche(t.dataset.niche);
+        // Ищем по названию, поднишам и ключевым словам («зубы» → Стоматология)
         const hay = (n.title + ' ' + (n.sub || []).join(' ')).toLowerCase();
-        const ok = !q || n.id === 'custom' || hay.includes(q);
+        const byKeyword = q.length >= 3 && DATA.matchNiche(q) === n.id;
+        const ok = !q || n.id === 'custom' || hay.includes(q) || byKeyword;
         t.hidden = !ok;
         if (ok && n.id !== 'custom') shown++;
       });
