@@ -20,7 +20,7 @@
           '<circle cx="28" cy="28" r="13" fill="none" stroke="#fff" stroke-width="6"/><path d="M38 38l11 11" stroke="#fff" stroke-width="7" stroke-linecap="round"/></svg>' +
         '</div>' +
         '<div class="welcome-hello">' + (known ? 'Привет, ' + UI.esc(name) + '! 👋' : 'Привет! 👋') + '</div>' +
-        '<h1 class="title center">Исследование ниши<br>за 5 минут</h1>' +
+        '<h1 class="title center">Быстрое исследование<br>вашей ниши</h1>' +
         '<div class="hint center">Расскажите о своём бизнесе — мы соберём главное и подскажем, что делать</div>' +
         '<div class="list card welcome-points">' +
           POINTS.map((p) =>

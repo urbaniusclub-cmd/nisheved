@@ -1,10 +1,14 @@
 /*
  * screens/company.js — шаг 4 «Компания и контакты».
- *   ИНН — проверка контрольных чисел; при CONFIG.DADATA_TOKEN карточка компании
- *         (название, ОГРН, адрес) заполняется автоматически через DaData
- *   Название компании, как к вам обращаться (обязательно), телефон (можно взять из Telegram)
- *   Сайты и ссылки — до 3
- * Данные сохраняются в профиль и подставляются в следующие исследования.
+ * Обязательные поля (помечены *), проверка — js/validate.js:
+ *   ИНН *       — 10 или 12 цифр, контрольные числа, код региона; при CONFIG.DADATA_TOKEN
+ *                 карточка компании (название, ОГРН, адрес) заполняется автоматически через DaData
+ *   Компания *  — с формой собственности, согласованной с ИНН (ООО/АО… для 10 цифр, ИП для 12)
+ *   ФИО *       — фамилия и имя (отчество) русскими буквами; по имени обращаемся в приложении
+ *   Телефон *   — российский номер +7 с маской; можно взять из Telegram
+ *   Сайты       — до 3, необязательно
+ * Для роли «Планирую бизнес» ИНН и компания необязательны (их ещё может не быть).
+ * Пока есть ошибки, кнопка «Далее / Сохранить» неактивна, ошибки видны под полями.
  */
 (function () {
 
@@ -20,7 +24,11 @@
       const json = await res.json();
       const s = json.suggestions && json.suggestions[0];
       if (!s) return null;
-      return { company: s.value || '', ogrn: (s.data && s.data.ogrn) || '', address: (s.data && s.data.address && s.data.address.value) || '' };
+      const d = s.data || {};
+      return {
+        company: s.value || '', ogrn: d.ogrn || '', address: (d.address && d.address.value) || '',
+        active: !d.state || d.state.status === 'ACTIVE'
+      };
     } catch (e) {
       return null;
     }
@@ -32,38 +40,49 @@
     if (!s) return '';
     if (s.charAt(0) === '@') s = 'https://t.me/' + s.slice(1);          // @канал → t.me
     if (!/^https?:\/\//i.test(s)) s = 'https://' + s;
-    try { const u = new URL(s); return /\./.test(u.hostname) ? u.href.replace(/\/$/, '') : ''; } catch (e) { return ''; }
+    try { const u = new URL(s); return /\.[a-zа-я]{2,}$/i.test(u.hostname) ? u.href.replace(/\/$/, '') : ''; } catch (e) { return ''; }
   }
   const shortUrl = (u) => u.replace(/^https?:\/\/(www\.)?/i, '');
+
+  // Поле с подписью, звёздочкой обязательности и местом для ошибки
+  function field(key, label, required, inputHtml, hint) {
+    return '<div class="block" data-field="' + key + '"><div class="label">' + label +
+      (required ? ' <span class="req">*</span>' : ' <span class="hint">· необязательно</span>') + '</div>' +
+      inputHtml + '<div class="field-err"></div>' + (hint ? '<div class="field-hint hint">' + hint + '</div>' : '') + '</div>';
+  }
 
   Router.register('company', {
     render(params) {
       const c = Screens.ctx(params);
-      if (!c.contactName) c.contactName = TG.user().first_name !== 'Гость' ? TG.user().first_name : '';
+      const planning = c.role === 'Планирую бизнес';
+      if (!c.contactName) c.contactName = '';
+      if (c.phone) c.phone = Validate.formatPhone(c.phone);
       return '<div class="page">' +
         Screens.steps(4, params) +
         '<h1 class="title">Компания и контакты</h1>' +
+        '<div class="hint">Поля со <span class="req">*</span> обязательны. Данные проверяются — укажите настоящие.</div>' +
 
-        '<div class="block"><div class="label">ИНН <span class="hint">· 10 или 12 цифр</span></div>' +
-          '<input class="input inn-input" inputmode="numeric" maxlength="12" placeholder="7707083893" value="' + UI.esc(c.inn || '') + '">' +
-          '<div class="inn-status hint"></div>' +
-          '<div class="company-card card" hidden></div>' +
-        '</div>' +
+        field('inn', 'ИНН', !planning,
+          '<input class="input inn-input" inputmode="numeric" maxlength="12" placeholder="10 или 12 цифр" value="' + UI.esc(c.inn || '') + '">' +
+          '<div class="company-card card" hidden></div>',
+          '10 цифр — организация, 12 — ИП') +
 
-        '<div class="block"><div class="label">Название компании <span class="hint">· необязательно</span></div>' +
-          '<input class="input company-input" maxlength="80" placeholder="ООО «Ромашка»" value="' + UI.esc(c.company || '') + '"></div>' +
+        field('company', 'Название компании', !planning,
+          '<input class="input company-input" maxlength="100" placeholder="ООО «Ромашка»" value="' + UI.esc(c.company || '') + '">',
+          'С формой собственности: ООО «Ромашка», АО «Звезда» или ИП Иванов Иван Иванович') +
 
-        '<div class="block"><div class="label">ФИО <span class="hint">· так мы будем к вам обращаться</span></div>' +
+        field('fio', 'ФИО', true,
           '<input class="input name-input" maxlength="80" placeholder="Иванов Константин Петрович" autocomplete="name" value="' + UI.esc(c.contactName || '') + '">' +
-          '<div class="hint name-preview"></div></div>' +
+          '<div class="hint name-preview"></div>') +
 
-        '<div class="block"><div class="label">Телефон <span class="hint">· необязательно</span></div>' +
-          '<div class="add-row"><input class="input phone-input" type="tel" inputmode="tel" maxlength="20" placeholder="+7 900 000-00-00" autocomplete="tel" value="' + UI.esc(c.phone || '') + '">' +
-          (TG.canRequestContact() ? '<button class="btn btn-secondary add-btn tap" data-act="contact" type="button" aria-label="Взять из Telegram">📱</button>' : '') +
-          '</div></div>' +
+        field('phone', 'Телефон', true,
+          '<div class="add-row"><input class="input phone-input" type="tel" inputmode="tel" maxlength="18" placeholder="+7 (900) 000-00-00" autocomplete="tel" value="' + UI.esc(c.phone || '') + '">' +
+          (TG.canRequestContact() ? '<button class="btn btn-secondary add-btn tap" data-act="contact" type="button" aria-label="Взять номер из Telegram">📱</button>' : '') +
+          '</div>',
+          TG.canRequestContact() ? 'Российский номер. 📱 — подставить номер из Telegram' : 'Российский номер, начинается с +7') +
 
         '<div class="block"><div class="label">Сайты и ссылки <span class="hint">· до 3, необязательно</span></div>' +
-          '<div class="add-row"><input class="input site-input" inputmode="url" maxlength="80" placeholder="site.ru, @канал, ВКонтакте" enterkeyhint="done">' +
+          '<div class="add-row"><input class="input site-input" inputmode="url" maxlength="80" placeholder="site.ru, @канал, vk.com/…" enterkeyhint="done">' +
           '<button class="btn btn-secondary add-btn tap" data-act="add-site" type="button" aria-label="Добавить">' + UI.icon('plus') + '</button></div>' +
           '<div class="site-list"></div></div>' +
       '</div>';
@@ -72,13 +91,36 @@
     mount(el, params) {
       const c = Screens.ctx(params);
       if (!Array.isArray(c.sites)) c.sites = [];
+      const planning = c.role === 'Планирую бизнес';
       const $ = (s) => el.querySelector(s);
-      const innInput = $('.inn-input'), status = $('.inn-status'), card = $('.company-card');
-      const companyInput = $('.company-input'), siteInput = $('.site-input'), phoneInput = $('.phone-input');
+      const innInput = $('.inn-input'), card = $('.company-card');
+      const companyInput = $('.company-input'), nameInput = $('.name-input'), phoneInput = $('.phone-input'), siteInput = $('.site-input');
+      const touched = {};          // ошибки показываем после первого ввода или ухода с поля
+      let innLookupError = '';     // ошибка от DaData (например, компания ликвидирована)
 
-      // ИНН необязателен, но если введён — должен быть корректным
-      const valid = () => (c.contactName || '').trim().length >= 2 && (!c.inn || Screens.innValid(c.inn));
+      // Ошибки всех полей ('' — поле в порядке)
+      function errors() {
+        const e = {};
+        e.inn = (planning && !c.inn) ? '' : (Validate.inn(c.inn) || innLookupError);
+        e.company = (planning && !c.company && !c.inn) ? '' : Validate.company(c.company, c.inn);
+        e.fio = Validate.fio(c.contactName);
+        e.phone = Validate.phone(c.phone);
+        return e;
+      }
+      const valid = () => Object.values(errors()).every((x) => !x);
       const updateBtn = Screens.formButton(params, valid, 'confirm');
+
+      function showErrors(all) {
+        const e = errors();
+        Object.keys(e).forEach((k) => {
+          const box = el.querySelector('[data-field="' + k + '"]');
+          const show = (all || touched[k]) && e[k];
+          box.querySelector('.field-err').textContent = show ? e[k] : '';
+          box.classList.toggle('has-err', !!show);
+          box.classList.toggle('is-ok', !e[k] && !!touched[k]);
+        });
+        updateBtn();
+      }
 
       function renderCard() {
         const has = c.company && (c.ogrn || c.address);
@@ -90,34 +132,26 @@
         }
       }
 
+      // Автокарточка по ИНН (если подключён DaData)
       let lookupSeq = 0;
-      async function checkInn(initial) {
-        const v = c.inn || '';
-        innInput.classList.remove('bad');
-        if (!v) { status.textContent = CONFIG.DADATA_TOKEN ? 'Заполним карточку компании автоматически' : ''; status.className = 'inn-status hint'; return; }
-        if (v.length !== 10 && v.length !== 12) { status.textContent = v.length + ' из ' + (v.length > 10 ? 12 : 10) + ' цифр'; status.className = 'inn-status hint'; return; }
-        if (!Screens.innValid(v)) {
-          status.textContent = 'ИНН с ошибкой — проверьте цифры'; status.className = 'inn-status bad-text';
-          innInput.classList.add('bad');
-          if (!initial) TG.haptic.error();
-          return;
-        }
-        status.textContent = '✓ ИНН корректный' + (CONFIG.DADATA_TOKEN ? ' · ищем компанию…' : '');
-        status.className = 'inn-status ok-text';
-        if (initial || !CONFIG.DADATA_TOKEN) return;
-        const seq = ++lookupSeq;
+      async function lookup() {
+        if (!CONFIG.DADATA_TOKEN || Validate.inn(c.inn)) return;
+        const v = c.inn, seq = ++lookupSeq;
         const info = await lookupInn(v);
         if (seq !== lookupSeq || c.inn !== v) return;   // пользователь уже ввёл другое
-        if (info) {
-          Object.assign(c, info);
-          companyInput.value = c.company;
-          status.textContent = '✓ Компания найдена';
-          TG.haptic.success();
-          renderCard();
-        } else {
-          status.textContent = '✓ ИНН корректный · введите название вручную';
-        }
+        if (!info) { innLookupError = 'Компания с таким ИНН не найдена в реестре'; showErrors(true); return; }
+        if (!info.active) { innLookupError = 'Компания с этим ИНН не действует (ликвидирована или закрыта)'; showErrors(true); return; }
+        innLookupError = '';
+        Object.assign(c, { company: info.company, ogrn: info.ogrn, address: info.address });
+        companyInput.value = c.company;
+        touched.company = true;
+        TG.haptic.success();
+        renderCard(); showErrors();
       }
+
+      // Подсказка «Будем обращаться: Константин»
+      const preview = $('.name-preview');
+      const showPreview = () => { const n = !Validate.fio(c.contactName) && Screens.firstNameFromFio(c.contactName); preview.textContent = n ? 'Будем обращаться: ' + n : ''; };
 
       function renderSites() {
         $('.site-list').innerHTML = c.sites.map((u, i) =>
@@ -127,12 +161,11 @@
         ).join('');
         const full = c.sites.length >= 3;
         siteInput.disabled = full;
-        siteInput.placeholder = full ? 'Добавлено 3 из 3' : 'site.ru, @канал, ВКонтакте';
+        siteInput.placeholder = full ? 'Добавлено 3 из 3' : 'site.ru, @канал, vk.com/…';
       }
-
       function addSite() {
         const u = normalizeUrl(siteInput.value);
-        if (!u) { if (siteInput.value.trim()) { TG.haptic.error(); UI.toast('Не похоже на ссылку'); } return; }
+        if (!u) { if (siteInput.value.trim()) { TG.haptic.error(); UI.toast('Не похоже на адрес сайта'); } return; }
         if (c.sites.length >= 3) return;
         if (!c.sites.includes(u)) c.sites.push(u);
         siteInput.value = '';
@@ -140,23 +173,46 @@
         renderSites();
       }
 
-      renderCard(); renderSites(); checkInn(true);
+      // Подсказка для названия под тип ИНН
+      function companyPlaceholder() {
+        companyInput.placeholder = String(c.inn || '').length === 12 ? 'ИП Иванов Иван Иванович' : 'ООО «Ромашка»';
+      }
+
+      // Уже заполненные поля (из профиля) — проверяем сразу
+      ['inn', 'company', 'fio', 'phone'].forEach((k) => {
+        const v = { inn: c.inn, company: c.company, fio: c.contactName, phone: c.phone }[k];
+        if (v) touched[k] = true;
+      });
+      renderCard(); renderSites(); showPreview(); companyPlaceholder(); showErrors();
 
       innInput.addEventListener('input', () => {
         const digits = innInput.value.replace(/\D/g, '').slice(0, 12);
         if (digits !== innInput.value) innInput.value = digits;
-        if (digits !== c.inn) { c.ogrn = ''; c.address = ''; renderCard(); }   // старая карточка уже не про этот ИНН
+        if (digits !== c.inn) { c.ogrn = ''; c.address = ''; innLookupError = ''; renderCard(); }   // старая карточка уже не про этот ИНН
         c.inn = digits;
-        checkInn(false);
-        updateBtn();
+        if (digits.length >= 10) touched.inn = true;
+        companyPlaceholder();
+        showErrors();
+        lookup();
       });
-      companyInput.addEventListener('input', () => { c.company = companyInput.value; });
-      // Подсказка «Будем обращаться: Константин» под полем ФИО
-      const preview = $('.name-preview');
-      const showPreview = () => { const n = Screens.firstNameFromFio(c.contactName); preview.textContent = n ? 'Будем обращаться: ' + n : ''; };
-      showPreview();
-      $('.name-input').addEventListener('input', (e) => { c.contactName = e.target.value; showPreview(); updateBtn(); });
-      phoneInput.addEventListener('input', () => { c.phone = phoneInput.value.replace(/[^\d+\-\s()]/g, ''); });
+      companyInput.addEventListener('input', () => { c.company = companyInput.value; touched.company = true; showErrors(); });
+      nameInput.addEventListener('input', () => { c.contactName = nameInput.value; showPreview(); showErrors(); });
+      phoneInput.addEventListener('focus', () => { if (!phoneInput.value) phoneInput.value = '+7 ('; });
+      phoneInput.addEventListener('input', () => {
+        const f = Validate.formatPhone(phoneInput.value);
+        phoneInput.value = f;
+        c.phone = f;
+        if (Validate.phoneDigits(f).length >= 11) touched.phone = true;
+        showErrors();
+      });
+      // Ушёл с поля — показываем ошибку, даже если ввод не закончен
+      [['inn', innInput], ['company', companyInput], ['fio', nameInput], ['phone', phoneInput]].forEach(([k, inp]) => {
+        inp.addEventListener('blur', () => {
+          if (k === 'phone' && phoneInput.value === '+7 (') { phoneInput.value = ''; c.phone = ''; }
+          if (inp.value.trim()) touched[k] = true;
+          showErrors();
+        });
+      });
       siteInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addSite(); } });
 
       el.addEventListener('click', async (e) => {
@@ -168,7 +224,12 @@
         if (a.dataset.act === 'add-site') addSite();
         if (a.dataset.act === 'contact') {
           const phone = await TG.requestContact();
-          if (phone) { c.phone = phone; phoneInput.value = phone; UI.toast('Номер добавлен'); }
+          if (!phone) return;
+          const f = Validate.formatPhone(phone);
+          if (Validate.phoneDigits(phone)[0] !== '7') { UI.toast('Нужен российский номер +7 — введите вручную'); return; }
+          c.phone = f; phoneInput.value = f; touched.phone = true;
+          UI.toast('Номер добавлен');
+          showErrors();
         }
       });
     }

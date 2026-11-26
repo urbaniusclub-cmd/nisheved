@@ -74,7 +74,7 @@
             '<path d="M102 52l12 12" stroke="#fff" stroke-width="9" stroke-linecap="round"/>' +
             '<path d="M76 38l7 6 12-14" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>' +
           '</svg>' +
-          '<div class="hero-title">Исследование ниши за 5 минут</div>' +
+          '<div class="hero-title">Быстрое исследование вашей ниши</div>' +
           '<div class="hero-sub">📰 Новости · 📊 Выводы · ✅ План</div>' +
           heroActions +
         '</div>' +

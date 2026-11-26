@@ -43,6 +43,16 @@ Router.register('confirm', {
 
   mount(el) {
     let creating = false;
+
+    // Контакты должны пройти проверку (validate.js) — иначе сначала исправить их
+    const c = Store.state.draft;
+    const planning = c.role === 'Планирую бизнес';
+    const contactsOk = !Validate.fio(c.contactName) && !Validate.phone(c.phone) &&
+      (planning && !c.inn && !c.company ? true : !Validate.inn(c.inn) && !Validate.company(c.company, c.inn));
+    if (!contactsOk) {
+      el.querySelector('[data-edit=company]').classList.add('row-warn');
+      TG.mainButton.show({ text: 'Проверить контакты', onClick: () => Router.go('company', { mode: 'edit' }) });
+    } else
     TG.mainButton.show(Store.hasAccess()
       ? {
           text: 'Получить исследование',

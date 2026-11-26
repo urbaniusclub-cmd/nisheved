@@ -27,7 +27,7 @@ function copyText(text) {
 
 function openReferral() {
   const link = referralLink();
-  const text = 'Попробуй ' + CONFIG.APP_NAME + ' — исследование ниши за 5 минут: свежие новости, инсайты и план действий. 1 день бесплатно за подписку на бота 🎁';
+  const text = 'Попробуй ' + CONFIG.APP_NAME + ' — быстрое и оперативное исследование ниши: свежие новости, инсайты и план действий. 1 день бесплатно за подписку на бота 🎁';
   UI.sheet(
     '<div class="ref-art">🤝</div>' +
     '<h2 class="sheet-title center">Порекомендуйте друзьям</h2>' +

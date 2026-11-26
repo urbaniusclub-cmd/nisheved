@@ -12,7 +12,7 @@ Router.register('about', {
         '<div class="chips" data-group="' + key + '">' +
         g.options.map((o) => '<button class="chip tap' + (c[key] === o ? ' selected' : '') + '" data-val="' + UI.esc(o) + '" type="button">' + UI.esc(o) + '</button>').join('') +
         '</div>' +
-        (key === 'geo' ? '<input class="input city-input" maxlength="40" placeholder="Ваш город" value="' + UI.esc(c.city || '') + '"' + (c.geo === 'Мой город' ? '' : ' hidden') + '>' : '') +
+        (key === 'geo' ? '<input class="input city-input" maxlength="40" placeholder="Ваш город, например Казань" value="' + UI.esc(c.city || '') + '"' + (c.geo === 'Мой город' ? '' : ' hidden') + '><div class="field-err city-err"></div>' : '') +
         '</div>';
     }).join('');
 
@@ -36,7 +36,7 @@ Router.register('about', {
     const compInput = el.querySelector('.comp-input');
     const compChips = el.querySelector('.comp-chips');
 
-    const valid = () => !!c.role && !!c.clients && !!c.geo && (c.geo !== 'Мой город' || (c.city || '').trim().length >= 2);
+    const valid = () => !!c.role && !!c.clients && !!c.geo && (c.geo !== 'Мой город' || !Validate.city(c.city));
     const updateBtn = Screens.formButton(params, valid, 'goal');
 
     function renderComps() {
@@ -80,7 +80,17 @@ Router.register('about', {
     });
 
     compInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addComp(); } });
-    city.addEventListener('input', () => { c.city = city.value; updateBtn(); });
+    // Город проверяем по правилам validate.js; ошибку показываем после ухода с поля
+    const cityErr = el.querySelector('.city-err');
+    let cityTouched = !!c.city;
+    const showCity = () => {
+      const e = c.geo === 'Мой город' && cityTouched ? Validate.city(c.city) : '';
+      cityErr.textContent = e;
+      city.classList.toggle('bad', !!e);
+    };
+    showCity();
+    city.addEventListener('input', () => { c.city = city.value; if (cityTouched) showCity(); updateBtn(); });
+    city.addEventListener('blur', () => { if (city.value.trim()) cityTouched = true; showCity(); });
     el.querySelector('.product-input').addEventListener('input', (e) => { c.product = e.target.value; });
   }
 });

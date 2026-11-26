@@ -274,6 +274,16 @@ h1, h2, p { margin: 0; }
 .news-niche { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .news-meta { display: flex; align-items: center; gap: 8px; }
 
+/* Проверка полей: звёздочка, ошибка под полем, красная / зелёная рамка */
+.req { color: var(--danger); font-weight: 700; }
+.row-warn .row-title { color: var(--danger); }
+.row-warn .row-emoji { background: rgba(229, 72, 77, .12); }
+.field-err:not(:empty) { color: var(--danger); font-size: 14px; font-weight: 500; padding: 0 4px; }
+.field-hint { font-size: 13px; padding: 0 4px; }
+.has-err .input { border-color: var(--danger); }
+.is-ok .input { border-color: rgba(49, 181, 69, .6); }
+.has-err .field-hint { display: none; }
+
 /* Шаг 4: компания и контакты */
 .input.bad { border-color: var(--danger); }
 .inn-status { font-size: 14px; padding: 0 4px; min-height: 20px; }

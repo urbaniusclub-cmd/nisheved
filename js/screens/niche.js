@@ -34,7 +34,7 @@ Router.register('niche', {
     const customInput = el.querySelector('.custom-input');
     const search = el.querySelector('input[type=search]');
 
-    const valid = () => !!c.nicheId && (c.nicheId !== 'custom' || (c.customNiche || '').trim().length >= 2);
+    const valid = () => !!c.nicheId && (c.nicheId !== 'custom' || !Validate.text(c.customNiche, 3));
     const updateBtn = Screens.formButton(params, valid, 'about');
 
     // Показать блоки уточнения под выбранную нишу
@@ -84,6 +84,8 @@ Router.register('niche', {
     function updateHint() {
       const text = (c.customNiche || '').trim();
       if (text.length < 2) { hint.innerHTML = ''; return; }
+      const err = Validate.text(text, 3);   // своя ниша — осмысленным текстом
+      if (err) { hint.innerHTML = '<span class="bad-text">' + UI.esc(err) + '</span>'; return; }
       const n = DATA.niche(DATA.matchNiche(text));
       hint.innerHTML = n
         ? '✨ Подберём данные сферы <b>' + n.emoji + ' ' + n.title + '</b> и адаптируем под вашу нишу'
