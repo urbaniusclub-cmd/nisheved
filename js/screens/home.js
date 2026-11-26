@@ -5,11 +5,16 @@
  * MainButton «Получить исследование» → Ниша.
  */
 (function () {
-  const PAGE = 8;   // сколько новостей показывать за раз
+  // Демо-лимиты ленты: «Все» — топ-10 самых свежих, отдельная сфера — максимум 5
+  const LIMIT_ALL = 10;
+  const LIMIT_SPHERE = 5;
+
+  function feedItems(filter) {
+    return Report.latestNews(filter || '').slice(0, filter ? LIMIT_SPHERE : LIMIT_ALL);
+  }
 
   function newsHtml(params) {
-    const all = Report.latestNews(params.filter || '');
-    const list = all.slice(0, params.limit || PAGE);
+    const list = feedItems(params.filter);
     return list.map((n, i) =>
       '<button class="news card tap" data-news="' + i + '" type="button">' +
         '<span class="news-top"><span class="news-niche">' + n.nicheEmoji + ' ' + UI.esc(n.nicheTitle) + '</span><span class="hint">' + UI.dateRel(n.date) + '</span></span>' +
@@ -17,7 +22,8 @@
         '<span class="news-meta">' + Screens.tagChip(n.tag) + '<span class="news-src">' + UI.esc(n.source) + '</span></span>' +
       '</button>'
     ).join('') +
-    (all.length > list.length ? '<button class="btn btn-plain btn-block tap" data-act="more" type="button">Показать ещё</button>' : '');
+    '<div class="hint center">' + (params.filter ? 'Топ-' + LIMIT_SPHERE + ' новостей сферы' : 'Топ-' + LIMIT_ALL + ' новостей по всем сферам') +
+      ' · полная сводка — в исследовании</div>';
   }
 
   Router.register('home', {
@@ -29,11 +35,13 @@
 
       // Две кнопки в герой-карточке: баланс (→ Оплата) и «Мои исследования» (→ История)
       let balanceText;
-      if (s.balance > 0 && !reports.length) balanceText = '🎁 ' + s.balance + ' бесплатно';
+      if (!s.bonusClaimed) balanceText = '🎁 Первое бесплатно';          // подарок за подписку на бота
+      else if (s.balance > 0 && !reports.length) balanceText = '🎁 ' + s.balance + ' бесплатно';
       else if (s.balance > 0) balanceText = '⭐ ' + s.balance + ' · Пополнить';
       else balanceText = '⭐ Пополнить баланс';
+      const highlight = !s.bonusClaimed || s.balance <= 0;
       const heroActions = '<div class="hero-actions">' +
-        '<button class="hero-btn tap' + (s.balance > 0 ? '' : ' hero-btn-warn') + '" data-act="buy" type="button">' + balanceText + '</button>' +
+        '<button class="hero-btn tap' + (highlight ? ' hero-btn-warn' : '') + '" data-act="buy" type="button">' + balanceText + '</button>' +
         '<button class="hero-btn tap" data-act="history" type="button">🗂 Мои исследования' +
           (reports.length ? ' <span class="hero-count">' + reports.length + '</span>' : '') +
           (pending ? ' <i class="spinner spinner-white"></i>' : '') +
@@ -89,12 +97,11 @@
 
       el.addEventListener('click', (e) => {
         const n = e.target.closest('[data-news]');
-        if (n) { Screens.openNews(Report.latestNews(params.filter || '')[+n.dataset.news]); return; }
+        if (n) { Screens.openNews(feedItems(params.filter)[+n.dataset.news]); return; }
         const f = e.target.closest('[data-filter]');
         if (f) {
           TG.haptic.select();
           params.filter = f.dataset.filter;   // запоминаем в истории — при возврате фильтр сохранится
-          params.limit = PAGE;
           el.querySelectorAll('[data-filter]').forEach((x) => x.classList.toggle('selected', x === f));
           rerenderFeed();
           return;
@@ -105,7 +112,6 @@
         if (act.dataset.act === 'profile') Router.go('profile');
         if (act.dataset.act === 'buy') Router.go('payment');
         if (act.dataset.act === 'history') Router.go('history');
-        if (act.dataset.act === 'more') { params.limit = (params.limit || PAGE) + PAGE; feed.innerHTML = newsHtml(params); }
       });
 
       // Пока есть готовящиеся отчёты — обновляем счётчик, когда они будут готовы

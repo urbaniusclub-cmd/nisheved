@@ -195,6 +195,17 @@ window.TG = (function () {
     });
   }
 
+  /* ---------- Подписка на бота ----------
+   * Системный запрос «Разрешить боту писать вам». true — разрешил (или уже было разрешено).
+   * Вне Telegram — демо через обычное подтверждение.
+   */
+  function requestWriteAccess() {
+    return new Promise((resolve) => {
+      if (can('6.9')) { WA.requestWriteAccess((ok) => resolve(!!ok)); return; }
+      resolve(window.confirm('Демо: подписаться на бота?'));
+    });
+  }
+
   /* ---------- Хранилище ----------
    * Telegram CloudStorage: привязано к аккаунту, до 1024 ключей, до 4096 символов на значение.
    * Вне Telegram — localStorage (с защитой от ошибок в приватном режиме).
@@ -233,6 +244,6 @@ window.TG = (function () {
   return {
     inTelegram, raw: WA, init, user, startParam, colorScheme, onThemeChange, setColors,
     haptic, mainButton, backButton, settingsButton, alert, confirm, openLink, openTelegramLink, storage,
-    canRequestContact, requestContact
+    canRequestContact, requestContact, requestWriteAccess
   };
 })();

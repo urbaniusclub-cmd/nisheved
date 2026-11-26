@@ -66,6 +66,8 @@
 
     // Ссылка вида t.me/<бот>/<app>?startapp=report_<id> — сразу открыть отчёт
     const sp = TG.startParam();
+    // Пришёл по реферальной ссылке ref_<id> — запоминаем пригласившего
+    if (sp.indexOf('ref_') === 0) Store.setReferrer(sp.slice(4));
     if (sp.indexOf('report_') === 0) {
       const rec = Store.getReport(sp.slice(7));
       if (rec) setTimeout(() => Router.go(Store.isReady(rec) ? 'report' : 'generating', { id: rec.id }), 50);

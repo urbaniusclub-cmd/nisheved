@@ -3,6 +3,57 @@
  * Аватар и имя из Telegram, «Мой бизнес» и «Компания и контакты» (правка → экраны анкеты в режиме 'profile'),
  * баланс и покупка, поддержка, конфиденциальность, сброс данных.
  */
+/* ---------- Реферальная ссылка ----------
+ * Ссылка с id пользователя: t.me/<бот>?start=ref_<id> (или t.me/<бот>/<app>?startapp=ref_<id>,
+ * если задан CONFIG.APP_SHORT_NAME). Пригласившего запоминает app.js → Store.setReferrer.
+ * Начисление наград за друзей требует сервера (v2).
+ */
+function referralLink() {
+  const id = TG.user().id || 'demo';
+  return CONFIG.APP_SHORT_NAME
+    ? 'https://t.me/' + CONFIG.BOT_USERNAME + '/' + CONFIG.APP_SHORT_NAME + '?startapp=ref_' + id
+    : 'https://t.me/' + CONFIG.BOT_USERNAME + '?start=ref_' + id;
+}
+
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text);
+  // Запасной вариант для старых WebView
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } finally { ta.remove(); }
+  return Promise.resolve();
+}
+
+function openReferral() {
+  const link = referralLink();
+  const text = 'Попробуй ' + CONFIG.APP_NAME + ' — исследование ниши за 5 минут: свежие новости, инсайты и план действий. Первое исследование бесплатно 🎁';
+  UI.sheet(
+    '<div class="ref-art">🤝</div>' +
+    '<h2 class="sheet-title center">Порекомендуйте друзьям</h2>' +
+    '<div class="ref-offer">🎁 1 рекомендация = 1 исследование бесплатно</div>' +
+    '<p class="sheet-text center">Поделитесь личной ссылкой с коллегами и знакомыми предпринимателями</p>' +
+    '<div class="ref-link">' + UI.esc(link) + '</div>' +
+    '<button class="btn btn-primary btn-block tap" data-ref="send" type="button">' + UI.icon('share', 20) + ' Отправить друзьям</button>' +
+    '<button class="btn btn-secondary btn-block tap" data-ref="copy" type="button">' + UI.icon('link', 20) + ' Скопировать ссылку</button>',
+    {
+      onMount(body) {
+        body.querySelector('[data-ref=send]').onclick = () => {
+          TG.haptic.tap();
+          const share = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(text);
+          if (TG.inTelegram) TG.openTelegramLink(share);
+          else if (navigator.share) navigator.share({ text: text, url: link }).catch(() => {});
+          else TG.openLink(share);
+        };
+        body.querySelector('[data-ref=copy]').onclick = () => {
+          copyText(link).then(() => { TG.haptic.success(); UI.toast('Ссылка скопирована'); })
+            .catch(() => UI.toast('Не удалось скопировать — выделите ссылку вручную'));
+        };
+      }
+    }
+  );
+}
+
 Router.register('profile', {
   render() {
     const u = TG.user();
@@ -50,6 +101,10 @@ Router.register('profile', {
       '<div class="section-title">Мой бизнес</div>' + business +
       '<div class="list card">' +
         link('support', 'support', 'Поддержка') +
+        '<button class="row tap" data-act="refer" type="button"><span class="row-ic">' + UI.icon('share') + '</span>' +
+          '<span class="row-main"><span class="row-title">Порекомендовать друзьям</span>' +
+          '<span class="row-sub">1 рекомендация = 1 исследование бесплатно</span></span>' +
+          '<span class="row-icon">' + UI.icon('chevron', 20) + '</span></button>' +
         link('privacy', 'shield', 'Конфиденциальность') +
         link('reset', 'trash', 'Очистить данные', 'danger') +
       '</div>' +
@@ -68,6 +123,7 @@ Router.register('profile', {
         case 'fill': Screens.startProfileEdit(); Router.go('niche', { mode: 'profile' }); break;
         case 'buy': Router.go('payment'); break;
         case 'support': TG.openTelegramLink(CONFIG.SUPPORT_LINK); break;
+        case 'refer': openReferral(); break;
         case 'privacy':
           TG.alert('Мы храним только то, что вы указали в анкете, и ваши отчёты — в защищённом хранилище Telegram. Данные не передаются третьим лицам.');
           break;

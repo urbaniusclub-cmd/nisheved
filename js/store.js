@@ -6,6 +6,8 @@
  *   balance   — сколько исследований доступно, число
  *   reports   — список id отчётов, JSON-массив (новые первыми)
  *   r_<id>    — один отчёт: параметры + отмеченные шаги плана, JSON
+ *   bonus     — '1', если бонус за подписку на бота уже получен
+ *   referrer  — id пригласившего пользователя (из ссылки ref_<id>)
  *
  * Содержимое отчёта (новости, выводы, план) НЕ хранится — оно собирается
  * из параметров в report.js. Так каждая запись укладывается в лимит 4096 символов.
@@ -21,6 +23,8 @@ window.Store = (function () {
     reportIds: [],
     reports: {},
     draft: emptyDraft(),
+    bonusClaimed: false,   // бонус за подписку на бота уже получен
+    referrer: '',          // кто пригласил (id из ссылки ref_<id>)
     loaded: false
   };
 
@@ -39,8 +43,10 @@ window.Store = (function () {
 
   /* ---------- Загрузка при старте ---------- */
   async function load() {
-    const base = await S.getMany(['profile', 'balance', 'reports']);
+    const base = await S.getMany(['profile', 'balance', 'reports', 'bonus', 'referrer']);
     state.profile = parse(base.profile, {});
+    state.bonusClaimed = base.bonus === '1';
+    state.referrer = base.referrer || '';
     state.reportIds = parse(base.reports, []);
     if (base.balance === '' || base.balance == null) {
       // Первый запуск — дарим бесплатные исследования
@@ -84,6 +90,22 @@ window.Store = (function () {
     await S.set('balance', String(state.balance));
   }
 
+  // Бонус за подписку на бота — один раз
+  async function claimBonus() {
+    if (state.bonusClaimed) return false;
+    state.bonusClaimed = true;
+    await S.set('bonus', '1');
+    await addBalance(CONFIG.BONUS_RESEARCHES);
+    return true;
+  }
+
+  // Запомнить пригласившего (только первый раз и не самого себя)
+  async function setReferrer(id) {
+    if (state.referrer || !id || String(id) === String(TG.user().id)) return;
+    state.referrer = String(id);
+    await S.set('referrer', state.referrer);
+  }
+
   /* ---------- Отчёты ---------- */
   function totalMs() { return DATA.STAGES.length * CONFIG.STAGE_MS; }
 
@@ -116,11 +138,11 @@ window.Store = (function () {
 
   /* ---------- Сброс (кнопка в Профиле) ---------- */
   async function resetAll() {
-    await S.remove(['profile', 'balance', 'reports'].concat(state.reportIds.map((id) => 'r_' + id)));
-    state.profile = {}; state.reportIds = []; state.reports = {}; state.draft = emptyDraft();
+    await S.remove(['profile', 'balance', 'reports', 'bonus'].concat(state.reportIds.map((id) => 'r_' + id)));
+    state.profile = {}; state.reportIds = []; state.reports = {}; state.draft = emptyDraft(); state.bonusClaimed = false;
     state.balance = CONFIG.FREE_RESEARCHES;
     await S.set('balance', String(state.balance));
   }
 
-  return { state, load, startDraft, saveProfile, addBalance, createReport, getReport, listReports, isReady, toggleStep, resetAll };
+  return { state, load, startDraft, saveProfile, addBalance, claimBonus, setReferrer, createReport, getReport, listReports, isReady, toggleStep, resetAll };
 })();
