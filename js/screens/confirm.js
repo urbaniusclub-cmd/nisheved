@@ -17,10 +17,10 @@ Router.register('confirm', {
         '<span class="row-icon">' + UI.icon('edit', 20) + '</span>' +
       '</button>';
 
-    // Доступ «Стандарт»: активен — исследование без списаний; нет — нужно выбрать пакет
+    // Полный доступ: активен — исследование без ограничений; нет — нужно получить доступ
     const price = access
-      ? '<div class="price"><span>Пакет «Стандарт»</span><b>✅ ' + Screens.accessUntilText() + '</b></div>'
-      : '<div class="price price-warn">' + (Store.state.bonusClaimed ? 'Нужен пакет «Стандарт»' : '🎁 Подпишитесь на бота — 1 день «Стандарта» бесплатно') + '</div>';
+      ? '<div class="price"><span>Полный доступ</span><b>✅ ' + Screens.accessUntilText() + '</b></div>'
+      : '<div class="price price-warn">' + (Store.state.bonusClaimed ? 'Нужен полный доступ' : '🎁 Подпишитесь на бота — 1 день полного доступа бесплатно') + '</div>';
 
     return '<div class="page">' +
       '<h1 class="title">Всё верно?</h1>' +
@@ -54,7 +54,7 @@ Router.register('confirm', {
             Router.go('generating', { id: rec.id }, { base: [{ name: 'home' }] });
           }
         }
-      : { text: Store.state.bonusClaimed ? 'Выбрать пакет' : 'Получить 1 день бесплатно', onClick: () => Router.go('payment', { returnTo: 'confirm' }) });
+      : { text: Store.state.bonusClaimed ? 'Получить доступ' : 'Получить 1 день бесплатно', onClick: () => Router.go('payment', { returnTo: 'confirm' }) });
 
     el.addEventListener('click', (e) => {
       const r = e.target.closest('[data-edit]');

@@ -3,7 +3,7 @@
  *
  * Что хранится (ключи в Telegram CloudStorage / localStorage):
  *   profile   — данные о бизнесе (ниша, роль, гео…), JSON
- *   access    — до какого момента действует пакет «Стандарт» (мс с 1970), число
+ *   access    — до какого момента действует полный доступ (мс с 1970), число
  *   reports   — список id отчётов, JSON-массив (новые первыми)
  *   r_<id>    — один отчёт: параметры + отмеченные шаги плана, JSON
  *   bonus     — '1', если бонус за подписку на бота уже получен
@@ -20,7 +20,7 @@ window.Store = (function () {
 
   const state = {
     profile: {},
-    accessUntil: 0,        // пакет «Стандарт» действует до этого момента (мс)
+    accessUntil: 0,        // полный доступ действует до этого момента (мс)
     reportIds: [],
     reports: {},
     draft: emptyDraft(),
@@ -81,10 +81,10 @@ window.Store = (function () {
     await S.set('profile', JSON.stringify(state.profile));
   }
 
-  /* ---------- Доступ «Стандарт» ---------- */
+  /* ---------- Полный доступ (на срок) ---------- */
   function hasAccess() { return Date.now() < state.accessUntil; }
 
-  // Продлить доступ на days дней (от текущего окончания, если пакет ещё действует)
+  // Продлить доступ на days дней (от текущего окончания, если доступ ещё действует)
   async function addDays(days) {
     state.accessUntil = Math.max(Date.now(), state.accessUntil) + days * 86400000;
     await S.set('access', String(state.accessUntil));

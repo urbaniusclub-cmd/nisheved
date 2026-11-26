@@ -9,7 +9,7 @@ Router.register('history', {
     if (!reports.length) {
       return '<div class="page"><h1 class="title">Мои исследования</h1>' +
         '<div class="empty card"><div class="empty-art">🗂</div><div class="empty-title">Здесь появятся ваши отчёты</div>' +
-        '<div class="hint">1 день «Стандарта» — бесплатно за подписку на бота</div></div></div>';
+        '<div class="hint">1 день полного доступа — бесплатно за подписку на бота</div></div></div>';
     }
     return '<div class="page">' +
       '<h1 class="title">Мои исследования</h1>' +

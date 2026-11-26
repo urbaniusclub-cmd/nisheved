@@ -108,7 +108,7 @@ window.Screens = (function () {
 
   function fmt(n) { return Number(n).toLocaleString('ru-RU'); }
 
-  // «до 5 декабря» / «до 14:30» (если сегодня) — когда заканчивается пакет «Стандарт»
+  // «до 5 декабря» / «до 14:30» (если сегодня) — когда заканчивается полный доступ
   function accessUntilText() {
     const until = new Date(Store.state.accessUntil);
     const sameDay = until.toDateString() === new Date().toDateString();

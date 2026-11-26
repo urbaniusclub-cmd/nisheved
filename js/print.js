@@ -37,7 +37,7 @@
 
   doc.innerHTML =
     '<header class="cover">' +
-      '<div class="brand">' + esc(CONFIG.APP_NAME) + ' · пакет «Стандарт»</div>' +
+      '<div class="brand">' + esc(CONFIG.APP_NAME) + ' · полный доступ</div>' +
       '<h1>' + r.emoji + ' ' + esc(r.nicheTitle) + '</h1>' +
       '<div class="muted">' + r.goal.emoji + ' Цель: ' + esc(r.goal.title) + ' · ' + dateRu(rec.createdAt) + '</div>' +
       (profileLine ? '<div class="muted">' + profileLine + '</div>' : '') +

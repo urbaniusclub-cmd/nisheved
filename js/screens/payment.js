@@ -1,10 +1,10 @@
 /*
  * screens/payment.js — «Пакеты».
- *   Пакет «Стандарт» — доступ на срок (CONFIG.PLANS), исследования без ограничений внутри срока:
+ *   «Полный доступ» на срок (CONFIG.PLANS) — все функции и исследования без ограничений внутри срока:
  *     1 день  — бесплатно за подписку на бота (системный запрос «Разрешить боту писать вам»), один раз
- *     Неделя / Месяц — оплата в Telegram Stars
+ *     на неделю / на месяц — оплата в Telegram Stars
  *   «Глубокий аудит» (CONFIG.AUDIT) — индивидуальная разработка, кнопка ведёт в чат с автором.
- *   Внизу — что входит в «Стандарт».
+ *   Внизу — что входит в полный доступ.
  *
  * v1 (демо): оплата имитируется подтверждением, доступ продлевается сразу.
  * v2: сервер создаёт ссылку на счёт (Bot API createInvoiceLink, currency XTR),
@@ -12,8 +12,9 @@
  *     а доступ продлевает сервер после successful_payment.
  */
 (function () {
-  // Что входит в «Стандарт»
+  // Что входит в полный доступ
   const BENEFITS = [
+    { icon: '♾', title: 'Исследования без ограничений', text: 'Любые ниши и цели — сколько угодно раз за срок доступа' },
     { icon: '📰', title: '10 свежих новостей ниши', text: 'Законы, рынок, конкуренты, технологии — с разбором «что это значит для вас»' },
     { icon: '📊', title: 'Обзор рынка и SWOT', text: 'Спрос, конкуренция, порог входа, тренды и возможности' },
     { icon: '💡', title: 'Инсайты и риски', text: 'Главные выводы под вашу цель' },
@@ -33,7 +34,7 @@
       const bonusCard = bonusPlan
         ? '<div class="plan plan-bonus card' + (s.bonusClaimed ? ' plan-used' : '') + '">' +
             '<div class="plan-top"><span class="plan-days">🎁</span>' +
-              '<span class="plan-main"><span class="plan-title">' + bonusPlan.title + ' · бесплатно</span>' +
+              '<span class="plan-main"><span class="plan-title">' + bonusPlan.title + '</span>' +
               '<span class="hint">' + (s.bonusClaimed ? 'Уже получен' : bonusPlan.note) + '</span></span>' +
               '<span class="plan-price">' + (s.bonusClaimed ? '✅' : '0 ⭐') + '</span></div>' +
             (s.bonusClaimed ? '' : '<button class="btn btn-primary btn-block tap" data-act="subscribe" type="button">Подписаться на @' + UI.esc(CONFIG.BOT_USERNAME) + ' и получить</button>') +
@@ -42,12 +43,12 @@
 
       return '<div class="page">' +
         '<h1 class="title">Пакеты</h1>' +
-        (Store.hasAccess() ? '<div class="promo-done">✅ Ваш «Стандарт» действует ' + Screens.accessUntilText() + '</div>' : '') +
+        (Store.hasAccess() ? '<div class="promo-done">✅ Полный доступ действует ' + Screens.accessUntilText() + '</div>' : '') +
 
-        // «Стандарт»
+        // «Полный доступ»
         '<div class="tier card">' +
-          '<div class="tier-head"><span class="tier-name">Стандарт</span><span class="tier-badge">Глубокое исследование</span></div>' +
-          '<div class="hint">Исследования без ограничений в течение срока. Подробный отчёт по вашей нише с возможностью скачать.</div>' +
+          '<div class="tier-head"><span class="tier-name">Полный доступ</span><span class="tier-badge">Все функции</span></div>' +
+          '<div class="hint">Все функции приложения на выбранный срок: исследования без ограничений, новости, рынок, SWOT, план действий и скачивание отчётов.</div>' +
         '</div>' +
         bonusCard +
         '<div class="plans">' +
@@ -69,7 +70,7 @@
           '<button class="btn btn-secondary btn-block tap" data-act="audit" type="button">Обсудить с автором</button>' +
         '</div>' +
 
-        '<div class="section-title">Что входит в «Стандарт»</div>' +
+        '<div class="section-title">Что входит в полный доступ</div>' +
         '<div class="list card">' +
         BENEFITS.map((b) =>
           '<div class="row"><span class="row-emoji">' + b.icon + '</span>' +
@@ -83,18 +84,18 @@
     mount(el, params) {
       let plan = paidPlans().find((p) => p.best) || paidPlans()[0];
       let paying = false;
-      const btnText = () => 'Оплатить ⭐ ' + Screens.fmt(plan.price) + ' · ' + plan.title;
+      const btnText = () => 'Оплатить ⭐ ' + Screens.fmt(plan.price) + ' · ' + (plan.short || plan.title);
 
       TG.mainButton.show({
         text: btnText(),
         onClick: async () => {
           if (paying) return;
           paying = true;
-          const ok = await TG.confirm('Демо-оплата: «Стандарт» на ' + Screens.daysText(plan.days) + ' за ⭐ ' + Screens.fmt(plan.price) + '?');
+          const ok = await TG.confirm('Демо-оплата: полный доступ на ' + Screens.daysText(plan.days) + ' за ⭐ ' + Screens.fmt(plan.price) + '?');
           if (ok) {
             await Store.addDays(plan.days);
             TG.haptic.success();
-            UI.toast('✅ «Стандарт» активен ' + Screens.accessUntilText());
+            UI.toast('✅ Полный доступ активен ' + Screens.accessUntilText());
             Router.back();   // вернёт на «Подтверждение» (returnTo) или в Профиль/Главную
           }
           paying = false;
@@ -108,7 +109,7 @@
           if (!allowed) { UI.toast('Без подписки бесплатный день недоступен'); return; }
           if (await Store.claimBonus()) {
             TG.haptic.success();
-            UI.toast('🎁 «Стандарт» на 1 день активен');
+            UI.toast('🎁 Полный доступ на 1 день активен');
           }
           if (params.returnTo === 'confirm') Router.back();   // сразу можно запускать исследование
           else Router.refresh();
