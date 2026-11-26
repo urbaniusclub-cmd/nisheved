@@ -251,6 +251,14 @@ h1, h2, p { margin: 0; }
   padding: 8px 12px; border-radius: var(--radius-s); background: var(--accent-soft);
 }
 
+/* Экран приветствия */
+.welcome { justify-content: center; gap: 14px; }
+.welcome-logo { display: flex; justify-content: center; margin-top: 8px; filter: drop-shadow(0 8px 20px rgba(42, 171, 238, .4)); }
+.welcome-hello { text-align: center; font-size: 18px; font-weight: 600; color: var(--accent); }
+.welcome .title { font-size: 28px; line-height: 1.2; }
+.welcome-gift { align-self: center; padding: 10px 16px; border-radius: 14px; background: var(--accent-soft); color: var(--accent); font-weight: 700; text-align: center; }
+.link-btn { min-height: 44px; padding: 0 4px; color: var(--accent); font-weight: 600; }
+
 /* Главная: кнопки в герой-карточке и лента новостей */
 .hero-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
 .hero-btn {

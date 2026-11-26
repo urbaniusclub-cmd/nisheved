@@ -62,10 +62,12 @@
       return;
     }
 
-    Router.go('home');
+    const sp = TG.startParam();
+    // Первый запуск — экран приветствия; дальше сразу Главная
+    if (!Store.state.onboarded && sp.indexOf('report_') !== 0) { Router.go('welcome'); }
+    else Router.go('home');
 
     // Ссылка вида t.me/<бот>/<app>?startapp=report_<id> — сразу открыть отчёт
-    const sp = TG.startParam();
     // Пришёл по реферальной ссылке ref_<id> — запоминаем пригласившего
     if (sp.indexOf('ref_') === 0) Store.setReferrer(sp.slice(4));
     if (sp.indexOf('report_') === 0) {

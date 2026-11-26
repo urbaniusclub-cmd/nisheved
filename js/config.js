@@ -13,8 +13,9 @@ window.CONFIG = {
   BOT_USERNAME: 'nishavedd_bot',
   APP_SHORT_NAME: '',
 
-  // Чат поддержки (открывается из Профиля)
-  SUPPORT_LINK: 'https://t.me/nisheved_support',
+  // Связь с автором (Профиль → Поддержка, экран приветствия)
+  SUPPORT_LINK: 'https://t.me/MaximSB',
+  SUPPORT_USERNAME: 'MaximSB',
 
   // Сколько исследований даём новому пользователю сразу (0 — только за подписку на бота)
   FREE_RESEARCHES: 0,

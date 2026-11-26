@@ -7,6 +7,7 @@
  *   reports   — список id отчётов, JSON-массив (новые первыми)
  *   r_<id>    — один отчёт: параметры + отмеченные шаги плана, JSON
  *   bonus     — '1', если бонус за подписку на бота уже получен
+ *   onboarded — '1', если экран приветствия уже показан
  *   referrer  — id пригласившего пользователя (из ссылки ref_<id>)
  *
  * Содержимое отчёта (новости, выводы, план) НЕ хранится — оно собирается
@@ -24,6 +25,7 @@ window.Store = (function () {
     reports: {},
     draft: emptyDraft(),
     bonusClaimed: false,   // бонус за подписку на бота уже получен
+    onboarded: false,      // экран приветствия уже показан
     referrer: '',          // кто пригласил (id из ссылки ref_<id>)
     loaded: false
   };
@@ -43,8 +45,9 @@ window.Store = (function () {
 
   /* ---------- Загрузка при старте ---------- */
   async function load() {
-    const base = await S.getMany(['profile', 'balance', 'reports', 'bonus', 'referrer']);
+    const base = await S.getMany(['profile', 'balance', 'reports', 'bonus', 'referrer', 'onboarded']);
     state.profile = parse(base.profile, {});
+    state.onboarded = base.onboarded === '1';
     state.bonusClaimed = base.bonus === '1';
     state.referrer = base.referrer || '';
     state.reportIds = parse(base.reports, []);
@@ -88,6 +91,12 @@ window.Store = (function () {
   async function addBalance(n) {
     state.balance = Math.max(0, state.balance + n);
     await S.set('balance', String(state.balance));
+  }
+
+  // Приветствие показано — больше не показываем
+  async function setOnboarded() {
+    state.onboarded = true;
+    await S.set('onboarded', '1');
   }
 
   // Бонус за подписку на бота — один раз
@@ -138,11 +147,11 @@ window.Store = (function () {
 
   /* ---------- Сброс (кнопка в Профиле) ---------- */
   async function resetAll() {
-    await S.remove(['profile', 'balance', 'reports', 'bonus'].concat(state.reportIds.map((id) => 'r_' + id)));
-    state.profile = {}; state.reportIds = []; state.reports = {}; state.draft = emptyDraft(); state.bonusClaimed = false;
+    await S.remove(['profile', 'balance', 'reports', 'bonus', 'onboarded'].concat(state.reportIds.map((id) => 'r_' + id)));
+    state.profile = {}; state.reportIds = []; state.reports = {}; state.draft = emptyDraft(); state.bonusClaimed = false; state.onboarded = false;
     state.balance = CONFIG.FREE_RESEARCHES;
     await S.set('balance', String(state.balance));
   }
 
-  return { state, load, startDraft, saveProfile, addBalance, claimBonus, setReferrer, createReport, getReport, listReports, isReady, toggleStep, resetAll };
+  return { state, load, startDraft, saveProfile, addBalance, setOnboarded, claimBonus, setReferrer, createReport, getReport, listReports, isReady, toggleStep, resetAll };
 })();

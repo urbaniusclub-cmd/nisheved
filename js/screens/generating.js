@@ -19,7 +19,7 @@ Router.register('generating', {
         ).join('') +
       '</div>' +
       '<div class="hint center">Можно свернуть — отчёт сохранится на главной</div>' +
-      '<button class="btn btn-plain btn-block tap" data-act="hide" type="button">Свернуть</button>' +
+      '<button class="btn btn-secondary btn-block tap" data-act="hide" type="button">На главную — отчёт сохранится</button>' +
     '</div>';
   },
 

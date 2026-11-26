@@ -131,7 +131,7 @@ Router.register('profile', {
           if (await TG.confirm('Удалить профиль, отчёты и баланс? Это нельзя отменить.')) {
             await Store.resetAll();
             UI.toast('Данные очищены');
-            Router.go('home', {}, { base: [] });
+            Router.go('welcome', {}, { base: [] });   // как при первом запуске
           }
           break;
       }
